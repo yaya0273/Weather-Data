@@ -1,0 +1,156 @@
+MAIN:
+ answer 1
+ $pin=accept("PIN.wav",6,3,10)
+ $res=http.get(concat("https://api.postalpincode.in/pincode/",$pin))
+ log $res
+ $index=find($res,"Division")
+ $n=len($res)
+ $loc=right($res,$n-$index-11)
+ $index=find($loc,"Region")
+ $loc=left($loc,$index-3)
+ log "Location: " $loc
+ 
+ $ch=accept("CURR_FORE.wav",1)
+ if compare($ch,1)==0
+     goto Current
+ else
+ 	play "DATE.wav"
+ 	$d=input(2,10)
+ 	$m=input(2,10)
+ 	$y=input(4,10)
+ 	$dt=concat($y,"-",$m,"-",$d)
+ 	
+ 	$ch=accept("AVG_TIME.wav",1)
+	if compare($ch,1)==0
+		goto Day
+	else
+		$hour=accept("HOUR.wav",2,3,5)
+		goto Hour
+	endif
+endif
+	 
+Current:
+ $data=http.get(concat("http://api.weatherapi.com/v1/current.json?key=3fa5d83df1b34df5a6b104748240606&q=",$loc))
+ log $data 
+ $n=len($data)
+ 
+ $index=find($data,"temp_c")
+ $temp= right($data,$n-$index-8)
+ $index=find($temp,"temp_f")
+ $temp=left($temp,$index-2)
+ log $temp
+ 
+ $index=find($data,"feelslike_c")
+ $feels= right($data,$n-$index-13)
+ $index=find($feels,"feelslike_f")
+ $feels=left($feels,$index-2)
+ log $feels
+ 
+ $index=find($data,"humidity")
+ $hum= right($data,$n-$index-10)
+ $index=find($hum,"cloud")
+ $hum=left($hum,$index-2)
+ log $hum
+ 
+ speak "The temperature in " $loc " is " $temp " degree celcius"
+ speak "It feels like " $feels " degree celcius"
+ speak "The humidity is " $hum " percent"
+ wait 0
+ 
+ goto GOODBYE
+
+Day:
+ $data=http.get(format("http://api.weatherapi.com/v1/forecast.json?days=14&key=3fa5d83df1b34df5a6b104748240606&q=%s&dt=%s",$loc,$dt))
+ $n=len($data)
+ 
+ $index=find($data,"maxtemp_c")
+ $maxtemp= right($data,$n-$index-11)
+ $index=find($maxtemp,"maxtemp_f")
+ $maxtemp=left($maxtemp,$index-2)
+ log $maxtemp
+ 
+ $index=find($data,"mintemp_c")
+ $mintemp= right($data,$n-$index-11)
+ $index=find($mintemp,"mintemp_f")
+ $mintemp=left($mintemp,$index-2)
+ log $mintemp
+ 
+ $index=find($data,"avgtemp_c")                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+ $avgtemp= right($data,$n-$index-11)
+ $index=find($avgtemp,"avgtemp_f")
+ $avgtemp=left($avgtemp,$index-2)
+ log $avgtemp
+ 
+ $index=find($data,"avghumidity")
+ $avghumidity= right($data,$n-$index-13)
+ $index=find($avghumidity,"daily_will_it_rain")
+ $avghumidity=left($avghumidity,$index-2)
+ log $avghumidity
+ 
+ $index=find($data,"daily_chance_of_rain")
+ $rain= right($data,$n-$index-22)
+ $index=find($rain,"daily_will_it_snow")
+ $rain=left($rain,$index-2)
+ log $rain
+ 
+ speak "The maximum temperature is " $maxtemp " degree celcius"
+ speak "The minimum temperature is " $mintemp " degree celcius"
+ speak "The average temperature is " $avgtemp " degree celcius"
+ speak "The average humidity is " $avghumidity " percent"
+ speak "The chances of rain are " $rain " percent"
+ wait 0
+ 
+ goto GOODBYE
+
+Hour:
+ $data=http.get(format("http://api.weatherapi.com/v1/forecast.json?days=14&key=3fa5d83df1b34df5a6b104748240606&q=%s&dt=%s&hour=%s",$loc,$dt,$hour))
+ $n=len($data)
+ 
+ $index=find($data,"temp_c")
+ $temp= right($data,$n-$index-8)
+ $index=find($temp,"temp_f")
+ $temp=left($temp,$index-2)
+ log $temp
+ 
+ $index=find($data,"feelslike_c")
+ $feels= right($data,$n-$index-13)
+ $index=find($feels,"feelslike_f")
+ $feels=left($feels,$index-2)
+ log $feels
+ 
+ $index=find($data,"humidity")
+ $hum= right($data,$n-$index-10)
+ $index=find($hum,"cloud")
+ $hum=left($hum,$index-2)
+ log $hum
+ 
+ 
+ $index=find($data,"chance_of_rain")
+ $rain= right($data,$n-$index-16)
+ $index=find($rain,"will_it_snow")
+ $rain=left($rain,$index-8)
+ log $rain
+ 
+ speak "The temperature is " $temp " degree celcius"
+ speak "It feels like " $feels " degree celcius"
+ speak "The humidity is " $hum " percent"	
+ speak "The chances of rain are " $rain " percent"
+ wait 0
+ 
+ goto GOODBYE
+ 
+GOODBYE:
+ display "Terminating Call"
+ play "goodbye.wav"
+ hangup
+ 
+ONHANGUP:
+   Clear
+   Hangup
+   goto MAIN
+
+ONSYSTEMERROR:
+    log $error
+    display $error
+    hangup
+    goto MAIN
